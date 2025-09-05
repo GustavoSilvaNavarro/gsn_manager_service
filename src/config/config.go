@@ -1,42 +1,28 @@
 package config
 
-import (
-	"fmt"
-	"os"
-	"strconv"
-)
+import "github.com/spf13/viper"
 
 type Config struct {
 	NAME        string
 	ENVIRONMENT string
 	PORT        int
+	MONGO_URI   string
 }
 
-func LoadConfig() (*Config, error) {
-	// Read the NAME environment variable.
-	name := os.Getenv("NAME")
-	if name == "" {
-		name = "gsn_expenses_tracker"
+func LoadConfig() *Config {
+	viper.AutomaticEnv()
+
+	viper.SetDefault("NAME", "gsn_expenses_tracker")
+	viper.SetDefault("ENVIRONMENT", "dev")
+	viper.SetDefault("PORT", 8080)
+	viper.SetDefault("MONGO_URI", "mongodb://localhost:27017")
+
+	cfg := &Config{
+		NAME:        viper.GetString("NAME"),
+		ENVIRONMENT: viper.GetString("ENVIRONMENT"),
+		PORT:        viper.GetInt("PORT"),
+		MONGO_URI:   viper.GetString("MONGO_URI"),
 	}
 
-	environment := os.Getenv("ENVIRONMENT")
-	if environment == "" {
-		environment = "dev" // Default from the TS example
-	}
-
-	portStr := os.Getenv("PORT")
-	if portStr == "" {
-		portStr = "8080" // Default port
-	}
-
-	serverPort, err := strconv.Atoi(portStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid server port: %w", err)
-	}
-
-	return &Config{
-		NAME:        name,
-		ENVIRONMENT: environment,
-		PORT:        serverPort,
-	}, nil
+	return cfg
 }
