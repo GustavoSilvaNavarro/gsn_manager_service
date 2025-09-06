@@ -25,8 +25,8 @@ type TaskRepository struct {
 
 // ? Struct for new task
 type CreateNewTask struct {
-	Title     string    `json:"title" binding:"required"`
-	Timestamp time.Time `json:"timestamp" binding:"required"`
+	Title     string    `json:"title" validate:"required"`
+	Timestamp time.Time `json:"timestamp" validate:"required"`
 	Completed bool      `json:"completed"`
 }
 

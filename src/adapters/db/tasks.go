@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -9,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-var taskRepository *TaskRepository
+var TaskRepo *TaskRepository
 
 func NewTaskRepository(client *mongo.Client, dbName, collectionName string) *TaskRepository {
 	database := client.Database(dbName)
@@ -21,13 +22,13 @@ func NewTaskRepository(client *mongo.Client, dbName, collectionName string) *Tas
 		collection: collection,
 	}
 
-	taskRepository = repository
+	TaskRepo = repository
 
-	return taskRepository
+	return repository
 }
 
 // CreateTodo inserts a new todo into the collection
-func (r *TaskRepository) CreateTodo(payload *CreateNewTask) (*Tasks, error) {
+func (r *TaskRepository) CreateTodo(ctx context.Context, payload *CreateNewTask) (*Tasks, error) {
 	now := time.Now()
 
 	newTask := &Tasks{
@@ -38,8 +39,9 @@ func (r *TaskRepository) CreateTodo(payload *CreateNewTask) (*Tasks, error) {
 		UpdatedAt: now,
 	}
 
-	result, err := r.collection.InsertOne(context.Background(), newTask)
+	result, err := r.collection.InsertOne(ctx, newTask)
 	if err != nil {
+		log.Printf("Error creating new task => %v", err)
 		return nil, err
 	}
 

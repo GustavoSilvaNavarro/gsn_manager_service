@@ -1,6 +1,10 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"fmt"
+
+	"github.com/spf13/viper"
+)
 
 type Config struct {
 	NAME                 string
@@ -14,6 +18,13 @@ type Config struct {
 var Cfg *Config
 
 func LoadConfig() *Config {
+	viper.SetConfigFile(".env") // or path to your .env file
+	viper.SetConfigType("env")  // dotenv format
+
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("No .env file found, using environment variables / defaults")
+	}
+
 	viper.AutomaticEnv()
 
 	viper.SetDefault("NAME", "gsn_expenses_tracker")

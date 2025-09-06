@@ -19,5 +19,7 @@ func main() {
 
 	defer adapters.DisconnectMongo(result.Db)
 
+	connections.CreateAllFactories(result.Db)
+
 	server.StartServer(config)
 }
