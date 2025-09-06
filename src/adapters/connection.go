@@ -12,11 +12,11 @@ import (
 
 var Client *mongo.Client
 
-func ConnectToMongoDb(uri string) (*mongo.Client, error) {
+func ConnectToMongoDb(url string) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(options.Client().ApplyURI(url))
 	if err != nil {
 		log.Fatal("☠️ MongoDB connection failed:", err)
 		return nil, err
@@ -32,15 +32,11 @@ func ConnectToMongoDb(uri string) (*mongo.Client, error) {
 	return client, nil
 }
 
-func DisconnectMongo() {
-	if Client == nil {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func DisconnectMongo(client *mongo.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := Client.Disconnect(ctx); err != nil {
+	if err := client.Disconnect(ctx); err != nil {
 		log.Printf("⚠️ Error disconnecting MongoDB: %v", err)
 	} else {
 		log.Println("👋 Disconnected from MongoDB.")

@@ -6,12 +6,12 @@ import (
 )
 
 func Healthz(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received health check request from %s", r.RemoteAddr)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-	// Set the Content-Type header to plain text.
 	w.Header().Set("Content-Type", "text/plain")
-
-	// Write the "OK" response and a 200 OK status code.
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte("OK"))
 	if err != nil {
