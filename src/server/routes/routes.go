@@ -6,4 +6,5 @@ import "net/http"
 func SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/healthz", Healthz)
 	mux.HandleFunc("/tasks/new", CreateNewTask)
+	mux.HandleFunc("/tasks", RetrieveAllTasks)
 }
