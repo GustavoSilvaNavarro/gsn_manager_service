@@ -12,6 +12,8 @@ import (
 func main() {
 	// Load the application configuration.
 	config := config.LoadConfig()
+	adapters.InitLogger()
+
 	result, err := connections.StartConnections()
 	if err != nil {
 		os.Exit(1)

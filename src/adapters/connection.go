@@ -2,7 +2,7 @@ package adapters
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -18,17 +18,17 @@ func ConnectToMongoDb(url string) (*mongo.Client, error) {
 
 	client, err := mongo.Connect(options.Client().ApplyURI(url))
 	if err != nil {
-		log.Fatal("☠️ MongoDB connection failed:", err)
+		Logger.Fatal().Msg(fmt.Sprintf("☠️ MongoDB connection failed: %v", err))
 		return nil, err
 	}
 
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		log.Fatal("MongoDB ping error:", err)
+		Logger.Fatal().Msg(fmt.Sprintf("MongoDB ping error: => %v", err))
 		return nil, err
 	}
 
 	Client = client
-	log.Println("📻 Connected to MongoDB!")
+	Logger.Info().Msg("📻 Connected to MongoDB!")
 	return client, nil
 }
 
@@ -37,8 +37,8 @@ func DisconnectMongo(client *mongo.Client) {
 	defer cancel()
 
 	if err := client.Disconnect(ctx); err != nil {
-		log.Printf("⚠️ Error disconnecting MongoDB: %v", err)
+		Logger.Warn().Msg(fmt.Sprintf("⚠️ Error disconnecting MongoDB: %v", err))
 	} else {
-		log.Println("👋 Disconnected from MongoDB.")
+		Logger.Info().Msg("👋 Disconnected from MongoDB.")
 	}
 }

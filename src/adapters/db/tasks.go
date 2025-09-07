@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"time"
+
+	"github.com/gsn_manager_service/src/adapters"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -41,7 +43,7 @@ func (r *TaskRepository) CreateTodo(ctx context.Context, payload *CreateNewTask)
 
 	result, err := r.collection.InsertOne(ctx, newTask)
 	if err != nil {
-		log.Printf("Error creating new task => %v", err)
+		adapters.Logger.Error().Msg(fmt.Sprintf("Error creating new task => %v", err))
 		return nil, err
 	}
 

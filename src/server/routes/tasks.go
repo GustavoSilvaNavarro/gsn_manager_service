@@ -3,11 +3,11 @@ package routes
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"unicode/utf8"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gsn_manager_service/src/adapters"
 	"github.com/gsn_manager_service/src/adapters/db"
 	"github.com/gsn_manager_service/src/utils"
 )
@@ -20,7 +20,7 @@ func CreateNewTask(w http.ResponseWriter, r *http.Request) {
 
 	var payload db.CreateNewTask
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		log.Printf("Invalid payload -> Error: %v", err)
+		adapters.Logger.Error().Msg(fmt.Sprintf("Invalid payload -> Error: %v", err))
 		utils.WriteError(w, http.StatusBadRequest, "Invalid payload")
 		return
 	}

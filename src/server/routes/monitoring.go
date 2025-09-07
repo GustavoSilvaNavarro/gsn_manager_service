@@ -1,8 +1,10 @@
 package routes
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+
+	"github.com/gsn_manager_service/src/adapters"
 )
 
 func Healthz(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +17,6 @@ func Healthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte("OK"))
 	if err != nil {
-		log.Printf("Error writing health check response: %v", err)
+		adapters.Logger.Error().Msg(fmt.Sprintf("Error writing health check response: %v", err))
 	}
 }
