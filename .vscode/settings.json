@@ -1,6 +1,15 @@
 {
   "cSpell.words": [
+    "ADMINPASSWORD",
+    "ADMINUSERNAME",
+    "BASICAUTH",
+    "bson",
+    "configdb",
+    "dotenv",
     "healthz",
-    "qodo"
+    "INITDB",
+    "qodo",
+    "readpref",
+    "zerolog"
   ]
 }

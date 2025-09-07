@@ -1,20 +1,26 @@
 package main
 
 import (
-	"log"
 	"os"
 
+	"github.com/gsn_manager_service/src/adapters"
 	"github.com/gsn_manager_service/src/config"
+	"github.com/gsn_manager_service/src/connections"
 	"github.com/gsn_manager_service/src/server"
 )
 
 func main() {
 	// Load the application configuration.
-	config, err := config.LoadConfig()
+	config := config.LoadConfig()
+	adapters.InitLogger()
+
+	result, err := connections.StartConnections()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
 		os.Exit(1)
 	}
+	defer adapters.DisconnectMongo(result.Db)
+
+	connections.CreateAllFactories(result.Db)
 
 	server.StartServer(config)
 }
