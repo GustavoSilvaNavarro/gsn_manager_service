@@ -58,10 +58,6 @@ func RetrieveAllTasks(w http.ResponseWriter, r *http.Request) {
 
 func GetSingleTask(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if id == "" {
-		utils.WriteError(w, http.StatusInternalServerError, "Missing task id")
-		return
-	}
 
 	task, err := db.TaskRepo.GetTaskById(r.Context(), id)
 	if err != nil {
@@ -72,4 +68,39 @@ func GetSingleTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, task)
+}
+
+func UpdateTask(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var payload db.UpdateTask
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		adapters.Logger.Error().Msg(fmt.Sprintf("Invalid payload -> Error: %v", err.Error()))
+		utils.WriteError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	if err := utils.Validate.Struct(payload); err != nil {
+		errs := err.(validator.ValidationErrors)
+		msg := ""
+		for _, e := range errs {
+			if utf8.RuneCountInString(msg) > 0 {
+				msg += " | "
+			}
+			msg += fmt.Sprintf("%s is %s", e.Field(), e.Tag())
+		}
+		message := fmt.Sprintf("Failed to update task with ID: %s. Error => ", id)
+		utils.WriteError(w, http.StatusBadRequest, message+msg)
+		return
+	}
+
+	updatedTask, err := db.TaskRepo.ModifyTask(r.Context(), id, &payload)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to update task with ID: %s | Error => %v", id, err.Error())
+		adapters.Logger.Error().Msg(msg)
+		utils.WriteError(w, http.StatusBadRequest, msg)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, &updatedTask)
 }

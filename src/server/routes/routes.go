@@ -10,5 +10,6 @@ func SetupRoutes(r *chi.Mux) {
 		r.Post("/new", CreateNewTask)
 		r.Get("/all", RetrieveAllTasks)
 		r.Get("/{id}", GetSingleTask)
+		r.Put("/{id}", UpdateTask)
 	})
 }

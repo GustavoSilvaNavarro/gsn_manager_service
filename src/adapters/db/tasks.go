@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -35,7 +36,7 @@ func (r *TaskRepository) CreateTodo(ctx context.Context, payload *CreateNewTask)
 
 	newTask := &Tasks{
 		Title:     payload.Title,
-		Timestamp: payload.Timestamp,
+		Timestamp: *payload.Timestamp,
 		Completed: payload.Completed,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -89,28 +90,37 @@ func (r *TaskRepository) GetTaskById(ctx context.Context, id string) (*Tasks, er
 }
 
 // UpdateTodo updates the title or completed status of a todo by its ID
-func (r *TaskRepository) ModifyTask(ctx context.Context, id bson.ObjectID, payload *UpdateTask) (*Tasks, error) {
-	updateDoc := bson.M{
-		"$set": bson.M{
-			"updatedAt": time.Now(),
-		},
+func (r *TaskRepository) ModifyTask(ctx context.Context, id string, payload *UpdateTask) (*Tasks, error) {
+	if payload.IsEmpty() {
+		return nil, errors.New("payload can not be empty")
+	}
+
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	set := bson.M{
+		"updated_at": time.Now(),
 	}
 
 	if payload.Title != nil {
-		updateDoc["$set"].(bson.M)["title"] = *payload.Title
+		set["title"] = *payload.Title
 	}
 	if payload.Completed != nil {
-		updateDoc["$set"].(bson.M)["completed"] = *payload.Completed
+		set["completed"] = *payload.Completed
 	}
 	if payload.Timestamp != nil {
-		updateDoc["$set"].(bson.M)["timestamp"] = *payload.Timestamp
+		set["timestamp"] = *payload.Timestamp
 	}
 
-	filter := bson.M{"_id": id}
+	updateDoc := bson.M{"$set": set}
+
+	filter := bson.M{"_id": objID}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
 	var updatedTask Tasks
-	err := r.collection.FindOneAndUpdate(ctx, filter, updateDoc, opts).Decode(&updatedTask)
+	err = r.collection.FindOneAndUpdate(ctx, filter, updateDoc, opts).Decode(&updatedTask)
 	if err != nil {
 		return nil, err
 	}

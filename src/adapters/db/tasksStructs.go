@@ -25,14 +25,18 @@ type TaskRepository struct {
 
 // ? Struct for new task
 type CreateNewTask struct {
-	Title     string    `json:"title" validate:"required"`
-	Timestamp time.Time `json:"timestamp" validate:"required"`
-	Completed bool      `json:"completed"`
+	Title     string     `json:"title" validate:"required,min=3,max=100"`
+	Timestamp *time.Time `json:"timestamp" validate:"required"`
+	Completed bool       `json:"completed"`
 }
 
 // ? Struct to update task
 type UpdateTask struct {
-	Title     *string    `json:"title,omitempty"`
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	Completed *bool      `json:"completed,omitempty"`
+	Title     *string    `json:"title,omitempty" validate:"omitempty,min=3,max=100"`
+	Timestamp *time.Time `json:"timestamp,omitempty" validate:"omitempty"`
+	Completed *bool      `json:"completed,omitempty" validate:"omitempty"`
+}
+
+func (u *UpdateTask) IsEmpty() bool {
+	return u.Title == nil && u.Timestamp == nil && u.Completed == nil
 }
