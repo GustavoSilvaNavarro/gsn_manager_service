@@ -104,3 +104,18 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusOK, &updatedTask)
 }
+
+func RemoveTaskById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	taskId, err := db.TaskRepo.DeleteTask(r.Context(), id)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to remove task with ID: %s | Error => %v", id, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, msg)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{
+		"message": fmt.Sprintf("Successfully removed task with ID: %s", taskId.Hex()),
+	})
+}

@@ -129,8 +129,13 @@ func (r *TaskRepository) ModifyTask(ctx context.Context, id string, payload *Upd
 }
 
 // DeleteTodo removes a todo by its ID
-func (r *TaskRepository) DeleteTodo(ctx context.Context, id bson.ObjectID) (bson.ObjectID, error) {
-	filter := bson.M{"_id": id}
+func (r *TaskRepository) DeleteTask(ctx context.Context, id string) (bson.ObjectID, error) {
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return bson.NilObjectID, err
+	}
+
+	filter := bson.M{"_id": objID}
 
 	result, err := r.collection.DeleteOne(ctx, filter)
 	if err != nil {
@@ -141,5 +146,5 @@ func (r *TaskRepository) DeleteTodo(ctx context.Context, id bson.ObjectID) (bson
 		return bson.NilObjectID, mongo.ErrNoDocuments
 	}
 
-	return id, nil
+	return objID, nil
 }
