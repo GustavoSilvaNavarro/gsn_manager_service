@@ -17,9 +17,7 @@ func StartConnections() (*Connections, error) {
 		return nil, err
 	}
 
-	return &Connections{
-		Db: client,
-	}, nil
+	return &Connections{Db: client}, nil
 }
 
 func CreateAllFactories(client *mongo.Client) {

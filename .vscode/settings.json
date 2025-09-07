@@ -5,9 +5,11 @@
     "BASICAUTH",
     "bson",
     "configdb",
+    "dotenv",
     "healthz",
     "INITDB",
     "qodo",
-    "readpref"
+    "readpref",
+    "zerolog"
   ]
 }

@@ -50,8 +50,7 @@ func (r *TaskRepository) CreateTodo(ctx context.Context, payload *CreateNewTask)
 }
 
 // GetTodos retrieves all todos from the collection
-func (r *TaskRepository) GetAllTasks() ([]Tasks, error) {
-	ctx := context.Background()
+func (r *TaskRepository) GetAllTasks(ctx context.Context) ([]Tasks, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err

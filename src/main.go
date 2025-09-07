@@ -16,7 +16,6 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-
 	defer adapters.DisconnectMongo(result.Db)
 
 	connections.CreateAllFactories(result.Db)
