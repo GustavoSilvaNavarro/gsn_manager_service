@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"unicode/utf8"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/gsn_manager_service/src/adapters"
 	"github.com/gsn_manager_service/src/adapters/db"
@@ -13,11 +14,6 @@ import (
 )
 
 func CreateNewTask(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var payload db.CreateNewTask
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		adapters.Logger.Error().Msg(fmt.Sprintf("Invalid payload -> Error: %v", err))
@@ -49,11 +45,6 @@ func CreateNewTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func RetrieveAllTasks(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	allTasks, err := db.TaskRepo.GetAllTasks(r.Context())
 
 	if err != nil {
@@ -66,8 +57,19 @@ func RetrieveAllTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSingleTask(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		utils.WriteError(w, http.StatusInternalServerError, "Missing task id")
 		return
 	}
+
+	task, err := db.TaskRepo.GetTaskById(r.Context(), id)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to find a task with ID: %s | Error => %v", id, err.Error())
+		adapters.Logger.Error().Msg(msg)
+		utils.WriteError(w, http.StatusBadRequest, msg)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, task)
 }

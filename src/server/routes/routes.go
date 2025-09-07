@@ -1,10 +1,14 @@
 package routes
 
-import "net/http"
+import "github.com/go-chi/chi/v5"
 
 // Setup all the routes here
-func SetupRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/healthz", Healthz)
-	mux.HandleFunc("/tasks/new", CreateNewTask)
-	mux.HandleFunc("/tasks", RetrieveAllTasks)
+func SetupRoutes(r *chi.Mux) {
+	r.Get("/healthz", Healthz)
+
+	r.Route("/tasks", func(r chi.Router) {
+		r.Post("/new", CreateNewTask)
+		r.Get("/all", RetrieveAllTasks)
+		r.Get("/{id}", GetSingleTask)
+	})
 }
