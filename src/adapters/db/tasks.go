@@ -73,14 +73,14 @@ func (r *TaskRepository) GetAllTasks(ctx context.Context) ([]Tasks, error) {
 }
 
 // GetTodoByID retrieves a single todo by its ObjectID
-func (r *TaskRepository) GetTaskById(id string) (*Tasks, error) {
+func (r *TaskRepository) GetTaskById(ctx context.Context, id string) (*Tasks, error) {
 	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
 	var task Tasks
-	err = r.collection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&task)
+	err = r.collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&task)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (r *TaskRepository) GetTaskById(id string) (*Tasks, error) {
 }
 
 // UpdateTodo updates the title or completed status of a todo by its ID
-func (r *TaskRepository) ModifyTask(id bson.ObjectID, payload *UpdateTask) (*Tasks, error) {
+func (r *TaskRepository) ModifyTask(ctx context.Context, id bson.ObjectID, payload *UpdateTask) (*Tasks, error) {
 	updateDoc := bson.M{
 		"$set": bson.M{
 			"updatedAt": time.Now(),
@@ -110,7 +110,7 @@ func (r *TaskRepository) ModifyTask(id bson.ObjectID, payload *UpdateTask) (*Tas
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
 	var updatedTask Tasks
-	err := r.collection.FindOneAndUpdate(context.Background(), filter, updateDoc, opts).Decode(&updatedTask)
+	err := r.collection.FindOneAndUpdate(ctx, filter, updateDoc, opts).Decode(&updatedTask)
 	if err != nil {
 		return nil, err
 	}
@@ -119,10 +119,10 @@ func (r *TaskRepository) ModifyTask(id bson.ObjectID, payload *UpdateTask) (*Tas
 }
 
 // DeleteTodo removes a todo by its ID
-func (r *TaskRepository) DeleteTodo(id bson.ObjectID) (bson.ObjectID, error) {
+func (r *TaskRepository) DeleteTodo(ctx context.Context, id bson.ObjectID) (bson.ObjectID, error) {
 	filter := bson.M{"_id": id}
 
-	result, err := r.collection.DeleteOne(context.Background(), filter)
+	result, err := r.collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return bson.NilObjectID, err
 	}
