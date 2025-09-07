@@ -8,15 +8,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gsn_manager_service/src/adapters"
 	"github.com/gsn_manager_service/src/config"
+	"github.com/gsn_manager_service/src/server/middlewares"
 	"github.com/gsn_manager_service/src/server/routes"
 )
 
 func StartServer(cfg *config.Config) {
-	// new server
-	// mux := http.NewServeMux()
 	r := chi.NewRouter()
+	middlewares.SetupMiddleware(r)
 
-	// Routes
 	routes.SetupRoutes(r)
 
 	adapters.Logger.Info().Msg(fmt.Sprintf("🚀 Starting server on %d port", cfg.PORT))

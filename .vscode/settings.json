@@ -8,6 +8,7 @@
     "dotenv",
     "healthz",
     "INITDB",
+    "nosniff",
     "qodo",
     "readpref",
     "zerolog"
