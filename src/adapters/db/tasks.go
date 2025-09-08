@@ -60,7 +60,7 @@ func (r *TaskRepository) GetAllTasks(ctx context.Context) ([]Tasks, error) {
 	}
 	defer cursor.Close(ctx)
 
-	var tasks []Tasks
+	tasks := make([]Tasks, 0)
 	for cursor.Next(ctx) {
 		var task Tasks
 		if err := cursor.Decode(&task); err != nil {
