@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	once   sync.Once
-	Logger zerolog.Logger
+	loggerOnce sync.Once
+	Logger     zerolog.Logger
 )
 
 func InitLogger() {
-	once.Do(func() {
+	loggerOnce.Do(func() {
 		// Configure time format
 		zerolog.TimeFieldFormat = time.RFC3339
 

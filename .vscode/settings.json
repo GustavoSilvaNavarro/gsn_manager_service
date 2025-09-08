@@ -8,8 +8,11 @@
     "dotenv",
     "healthz",
     "INITDB",
+    "nosniff",
     "qodo",
     "readpref",
+    "tmpl",
     "zerolog"
-  ]
+  ],
+  "evenBetterToml.schema.enabled": false, // disabling for .air.toml file
 }

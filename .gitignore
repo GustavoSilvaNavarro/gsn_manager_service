@@ -3,3 +3,4 @@
 
 # Environmental Variables
 .env
+/tmp
