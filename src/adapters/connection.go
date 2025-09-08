@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -10,26 +11,32 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
-var Client *mongo.Client
+var (
+	Client *mongo.Client
+	onceDb sync.Once
+)
 
 func ConnectToMongoDb(url string) (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	var err error
+	onceDb.Do(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-	client, err := mongo.Connect(options.Client().ApplyURI(url))
-	if err != nil {
-		Logger.Fatal().Msg(fmt.Sprintf("☠️ MongoDB connection failed: %v", err))
-		return nil, err
-	}
+		Client, err = mongo.Connect(options.Client().ApplyURI(url))
+		if err != nil {
+			Logger.Fatal().Msg(fmt.Sprintf("☠️ MongoDB connection failed: %v", err))
+			return
+		}
 
-	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		Logger.Fatal().Msg(fmt.Sprintf("MongoDB ping error: => %v", err))
-		return nil, err
-	}
+		if err = Client.Ping(ctx, readpref.Primary()); err != nil {
+			Logger.Fatal().Msg(fmt.Sprintf("MongoDB ping error: => %v", err))
+			return
+		}
 
-	Client = client
-	Logger.Info().Msg("📻 Connected to MongoDB!")
-	return client, nil
+		Logger.Info().Msg("📻 Connected to MongoDB!")
+	})
+
+	return Client, err
 }
 
 func DisconnectMongo(client *mongo.Client) {
