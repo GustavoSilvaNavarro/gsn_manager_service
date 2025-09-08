@@ -9,6 +9,9 @@ TICKET_PREFIX := $(shell git branch --show-current | cut -d '_' -f 1)
 up:
 	go run ./src/main.go
 
+dev:
+	air
+
 # DB Commands
 run-external-services:
 	docker compose -f ./docker-compose.inf.yml up -d mongodb  mongo-express

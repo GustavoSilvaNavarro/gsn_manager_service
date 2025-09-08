@@ -47,7 +47,7 @@ func main() {
 
 	select {
 	case sig := <-quit:
-		adapters.Logger.Info().Msgf("📴 Received shutdown signal: %s", sig)
+		adapters.Logger.Info().Msgf("👻 Received shutdown signal: %s", sig)
 		cancel()
 	case err := <-serverErr:
 		adapters.Logger.Error().Err(err).Msg("💥 Server crashed")
