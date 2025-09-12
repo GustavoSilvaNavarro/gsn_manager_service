@@ -12,6 +12,9 @@ up:
 dev:
 	air
 
+test:
+	go test -v ./test
+
 # DB Commands
 run-external-services:
 	docker compose -f ./docker-compose.inf.yml up -d mongodb  mongo-express

@@ -1,11 +1,22 @@
 package db
 
 import (
+	"context"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
+
+// Add this interface to your db package
+type CollectionInterface interface {
+	InsertOne(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error)
+	Find(ctx context.Context, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error)
+	FindOne(ctx context.Context, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult
+	FindOneAndUpdate(ctx context.Context, filter any, update any, opts ...options.Lister[options.FindOneAndUpdateOptions]) *mongo.SingleResult
+	DeleteOne(ctx context.Context, filter any, opts ...options.Lister[options.DeleteOneOptions]) (*mongo.DeleteResult, error)
+}
 
 // ? DB Model for Task
 type Tasks struct {
@@ -20,7 +31,7 @@ type Tasks struct {
 type TaskRepository struct {
 	client     *mongo.Client
 	database   *mongo.Database
-	collection *mongo.Collection
+	collection CollectionInterface
 }
 
 // ? Struct for new task
