@@ -2,129 +2,132 @@ package unit
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/gsn_manager_service/src/adapters/db"
+	"github.com/gsn_manager_service/tests/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-
-	"github.com/gsn_manager_service/tests/mocks"
 )
 
-func TestCreateNewTask_Successfully(t *testing.T) {
+func TestCreateTodo(t *testing.T) {
 	ctx := context.Background()
-	mockCollection := &mocks.MockCollection{}
-	repo := mocks.TestTaskRepository(nil, nil, mockCollection)
+	t.Run("Should create a new todo successfully in the db and return it.", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
 
-	payload := mocks.GetSampleCreateTaskPayload()
-	expectedID := bson.NewObjectID()
+		payload := mocks.GetSampleCreateTaskPayload()
+		expectedID := bson.NewObjectID()
 
-	mockCollection.InsertOneFunc = func(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error) {
-		return &mongo.InsertOneResult{
-			InsertedID: expectedID,
-		}, nil
-	}
+		mockCollection.InsertOneFunc = func(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error) {
+			return &mongo.InsertOneResult{
+				InsertedID: expectedID,
+			}, nil
+		}
 
-	// Act
-	result, err := repo.CreateTodo(ctx, payload)
+		// Act
+		result, err := repo.CreateTodo(ctx, payload)
 
-	// Assert
-	if err != nil {
-		t.Errorf("Should not return an error but got %v", err)
-	}
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, result.Title, payload.Title)
+		assert.Equal(t, result.ID, expectedID)
+		assert.Equal(t, result.Completed, payload.Completed)
+		assert.False(t, result.UpdatedAt.IsZero())
+		assert.False(t, result.Timestamp.IsZero())
+		assert.False(t, result.CreatedAt.IsZero())
+	})
 
-	if result == nil {
-		t.Fatal("Should create and return a new task in the db.")
-	}
+	t.Run("Should return an error when there is a db connection failure.", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
 
-	if result.Title != payload.Title {
-		t.Errorf("Expected title %s, got %s", payload.Title, result.Title)
-	}
+		payload := mocks.GetSampleCreateTaskPayload()
+		expectedError := errors.New("Database connection failed")
 
-	if result.ID != expectedID {
-		t.Errorf("Expected ID %s, got %s", expectedID.Hex(), result.ID.Hex())
-	}
+		mockCollection.InsertOneFunc = func(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error) {
+			return nil, expectedError
+		}
 
-	if result.Completed != payload.Completed {
-		t.Errorf("Expecting completed property to be false but it received %v", result.Completed)
-	}
+		// Act
+		result, err := repo.CreateTodo(ctx, payload)
 
-	if result.CreatedAt.IsZero() {
-		t.Errorf("CreatedAt field is zero, expected it to be set")
-	}
-
-	if result.UpdatedAt.IsZero() {
-		t.Errorf("UpdatedAt field is zero, expected it to be set")
-	}
+		// Assert
+		assert.Nil(t, result)
+		assert.NotNil(t, err)
+		assert.Equal(t, err.Error(), expectedError.Error())
+	})
 }
 
-// func TestCreateTodo_Error(t *testing.T) {
-// 	// Arrange
-// 	ctx := context.Background()
-// 	mockCollection := &mocks.MockCollection{}
-// 	repo := db.NewTaskRepositoryWithCollection(nil, nil, mockCollection)
+func TestGetAllTasks_Success(t *testing.T) {
+	ctx := context.Background()
+	t.Run("Should return a list of tasks successfully.", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
 
-// 	payload := fixtures.GetSampleCreateTaskPayload()
-// 	expectedError := errors.New("database connection failed")
+		expectedTasks := mocks.GetMultipleTasks()
 
-// 	mockCollection.InsertOneFunc = func(ctx context.Context, document interface{}, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error) {
-// 		return nil, expectedError
-// 	}
+		mockCollection.FindFunc = func(ctx context.Context, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+			var docs []any
+			for _, task := range expectedTasks {
+				docs = append(docs, task)
+			}
 
-// 	// Act
-// 	result, err := repo.CreateTodo(ctx, payload)
+			cursor, err := mongo.NewCursorFromDocuments(docs, nil, nil)
+			return cursor, err
+		}
 
-// 	// Assert
-// 	if err == nil {
-// 		t.Error("Expected error, got nil")
-// 	}
+		// Act
+		result, err := repo.GetAllTasks(ctx)
 
-// 	if result != nil {
-// 		t.Error("Expected result to be nil")
-// 	}
+		// Assert
+		assert.Nil(t, err)
+		assert.Equal(t, len(result), len(expectedTasks))
 
-// 	if err.Error() != expectedError.Error() {
-// 		t.Errorf("Expected error %s, got %s", expectedError.Error(), err.Error())
-// 	}
-// }
+		for i, task := range result {
+			assert.Equal(t, task.Title, result[i].Title)
+		}
+	})
 
-// func TestGetAllTasks_Success(t *testing.T) {
-// 	// Arrange
-// 	ctx := context.Background()
-// 	mockCollection := &mocks.MockCollection{}
-// 	repo := db.NewTaskRepositoryWithCollection(nil, nil, mockCollection)
+	t.Run("Should successfully return an empty slice when there is no tasks", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
+		emptyArr := make([]db.Tasks, 0)
 
-// 	expectedTasks := fixtures.GetMultipleTasks()
+		mockCollection.FindFunc = func(ctx context.Context, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+			var docs []any
+			cursor, err := mongo.NewCursorFromDocuments(docs, nil, nil)
+			return cursor, err
+		}
 
-// 	mockCollection.FindFunc = func(ctx context.Context, filter interface{}, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
-// 		// Convert tasks to interface{} slice
-// 		var docs []interface{}
-// 		for _, task := range expectedTasks {
-// 			docs = append(docs, task)
-// 		}
+		taskList, err := repo.GetAllTasks(ctx)
 
-// 		cursor, err := tests.NewMockCursor(docs)
-// 		return cursor, err
-// 	}
+		assert.Nil(t, err)
+		assert.NotNil(t, taskList)
+		assert.Equal(t, emptyArr, taskList)
+		assert.Equal(t, len(taskList), 0)
+	})
 
-// 	// Act
-// 	result, err := repo.GetAllTasks(ctx)
+	t.Run("Should return an error when there is a db failure while retrieving the tasks", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
+		expectedDbError := errors.New("DB failure during")
 
-// 	// Assert
-// 	if err != nil {
-// 		t.Errorf("Expected no error, got %v", err)
-// 	}
+		mockCollection.FindFunc = func(ctx context.Context, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+			return nil, expectedDbError
+		}
 
-// 	if len(result) != len(expectedTasks) {
-// 		t.Errorf("Expected %d tasks, got %d", len(expectedTasks), len(result))
-// 	}
+		taskList, err := repo.GetAllTasks(ctx)
 
-// 	for i, task := range result {
-// 		if task.Title != expectedTasks[i].Title {
-// 			t.Errorf("Expected task title %s, got %s", expectedTasks[i].Title, task.Title)
-// 		}
-// 	}
-// }
+		assert.Nil(t, taskList)
+		assert.NotNil(t, err)
+		assert.Equal(t, expectedDbError.Error(), err.Error())
+	})
+}
 
 // func TestGetTaskById_Success(t *testing.T) {
 // 	// Arrange
