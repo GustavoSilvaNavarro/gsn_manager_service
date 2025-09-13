@@ -32,7 +32,7 @@ func TestCreateTodo(t *testing.T) {
 		result, err := repo.CreateTodo(ctx, payload)
 
 		// Assert
-		assert.NoError(t, err)
+		assert.NoError(t, err, "Should not return any errors")
 		assert.NotNil(t, result)
 		assert.Equal(t, result.Title, payload.Title)
 		assert.Equal(t, result.ID, expectedID)
@@ -63,7 +63,7 @@ func TestCreateTodo(t *testing.T) {
 	})
 }
 
-func TestGetAllTasks_Success(t *testing.T) {
+func TestGetAllTasks(t *testing.T) {
 	ctx := context.Background()
 	t.Run("Should return a list of tasks successfully.", func(t *testing.T) {
 		mockCollection := &mocks.MockCollection{}
@@ -129,147 +129,131 @@ func TestGetAllTasks_Success(t *testing.T) {
 	})
 }
 
-// func TestGetTaskById_Success(t *testing.T) {
-// 	// Arrange
-// 	ctx := context.Background()
-// 	mockCollection := &mocks.MockCollection{}
-// 	repo := db.NewTaskRepositoryWithCollection(nil, nil, mockCollection)
+func TestGetTaskById(t *testing.T) {
+	ctx := context.Background()
+	t.Run("Should return a task when valid task_id is passed.", func(t *testing.T) {
+		// Arrange
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
 
-// 	expectedTask := fixtures.GetSampleTask()
-// 	taskID := expectedTask.ID.Hex()
+		expectedTask := mocks.GetSampleTask("Task 1")
+		taskID := expectedTask.ID.Hex()
 
-// 	mockCollection.FindOneFunc = func(ctx context.Context, filter interface{}, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
-// 		return tests.NewMockSingleResult(expectedTask, nil)
-// 	}
+		mockCollection.FindOneFunc = func(ctx context.Context, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+			return mongo.NewSingleResultFromDocument(expectedTask, nil, bson.NewRegistry())
+		}
 
-// 	// Act
-// 	result, err := repo.GetTaskById(ctx, taskID)
+		// Act
+		result, err := repo.GetTaskById(ctx, taskID)
 
-// 	// Assert
-// 	if err != nil {
-// 		t.Errorf("Expected no error, got %v", err)
-// 	}
+		// Assert
+		assert.Nil(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, result.Title, expectedTask.Title)
+		assert.Equal(t, result.ID.Hex(), taskID)
+		assert.Equal(t, result.Completed, expectedTask.Completed)
+		assert.False(t, result.UpdatedAt.IsZero())
+		assert.False(t, result.Timestamp.IsZero())
+		assert.False(t, result.CreatedAt.IsZero())
+	})
+}
 
-// 	if result == nil {
-// 		t.Fatal("Expected result to be non-nil")
-// 	}
+func TestModifyTask(t *testing.T) {
+	ctx := context.Background()
+	t.Run("Should return and updated task successfully.", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
 
-// 	if result.Title != expectedTask.Title {
-// 		t.Errorf("Expected title %s, got %s", expectedTask.Title, result.Title)
-// 	}
-// }
+		taskID := bson.NewObjectID().Hex()
+		payload := mocks.GetSampleUpdateTaskPayload()
 
-// func TestModifyTask_Success(t *testing.T) {
-// 	// Arrange
-// 	ctx := context.Background()
-// 	mockCollection := &mocks.MockCollection{}
-// 	repo := db.NewTaskRepositoryWithCollection(nil, nil, mockCollection)
+		updatedTask := mocks.GetSampleTask("Task 1")
+		updatedTask.Title = *payload.Title
+		updatedTask.Completed = *payload.Completed
+		updatedTask.Timestamp = *payload.Timestamp
 
-// 	taskID := bson.NewObjectID().Hex()
-// 	payload := fixtures.GetSampleUpdateTaskPayload()
+		mockCollection.FindOneAndUpdateFunc = func(ctx context.Context, filter any, update any, opts ...options.Lister[options.FindOneAndUpdateOptions]) *mongo.SingleResult {
+			return mongo.NewSingleResultFromDocument(updatedTask, nil, bson.NewRegistry())
+		}
 
-// 	updatedTask := fixtures.GetSampleTask()
-// 	updatedTask.Title = *payload.Title
-// 	updatedTask.Completed = *payload.Completed
+		// Act
+		taskUpdated, err := repo.ModifyTask(ctx, taskID, payload)
 
-// 	mockCollection.FindOneAndUpdateFunc = func(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.FindOneAndUpdateOptions]) *mongo.SingleResult {
-// 		return tests.NewMockSingleResult(updatedTask, nil)
-// 	}
+		assert.Nil(t, err)
+		assert.NotNil(t, taskUpdated)
+		assert.Equal(t, taskUpdated.Title, updatedTask.Title)
+		assert.Equal(t, taskUpdated.Completed, updatedTask.Completed)
+		assert.Equal(t, taskUpdated.ID, updatedTask.ID)
+		assert.False(t, taskUpdated.Timestamp.IsZero())
+		assert.False(t, taskUpdated.CreatedAt.IsZero())
+		assert.False(t, taskUpdated.UpdatedAt.IsZero())
+	})
 
-// 	// Act
-// 	result, err := repo.ModifyTask(ctx, taskID, payload)
+	t.Run("Should return an error when payload is empty", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
+		taskId := bson.NewObjectID()
+		payload := &db.UpdateTask{}
 
-// 	// Assert
-// 	if err != nil {
-// 		t.Errorf("Expected no error, got %v", err)
-// 	}
+		updatedTask, err := repo.ModifyTask(ctx, taskId.Hex(), payload)
 
-// 	if result == nil {
-// 		t.Fatal("Expected result to be non-nil")
-// 	}
+		assert.NotNil(t, err)
+		assert.Nil(t, updatedTask)
+		assert.Equal(t, err.Error(), "payload can not be empty")
+	})
+}
 
-// 	if result.Title != *payload.Title {
-// 		t.Errorf("Expected title %s, got %s", *payload.Title, result.Title)
-// 	}
-// }
+func TestDeleteTask(t *testing.T) {
+	ctx := context.Background()
+	t.Run("Should successfully delete a task and return their ID", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
+		taskID := bson.NewObjectID()
 
-// func TestModifyTask_EmptyPayload(t *testing.T) {
-// 	// Arrange
-// 	ctx := context.Background()
-// 	mockCollection := &mocks.MockCollection{}
-// 	repo := db.NewTaskRepositoryWithCollection(nil, nil, mockCollection)
+		mockCollection.DeleteOneFunc = func(ctx context.Context, filter any, opts ...options.Lister[options.DeleteOneOptions]) (*mongo.DeleteResult, error) {
+			return &mongo.DeleteResult{
+				DeletedCount: 1,
+			}, nil
+		}
 
-// 	taskID := bson.NewObjectID().Hex()
-// 	payload := &db.UpdateTask{} // Empty payload
+		deletedId, err := repo.DeleteTask(ctx, taskID.Hex())
 
-// 	// Act
-// 	result, err := repo.ModifyTask(ctx, taskID, payload)
+		// Assert
+		assert.Nil(t, err)
+		assert.Equal(t, deletedId, taskID)
+	})
 
-// 	// Assert
-// 	if err == nil {
-// 		t.Error("Expected error for empty payload, got nil")
-// 	}
+	t.Run("Should return an error when delete process has failed", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
+		taskID := bson.NewObjectID()
 
-// 	if result != nil {
-// 		t.Error("Expected result to be nil")
-// 	}
+		mockCollection.DeleteOneFunc = func(ctx context.Context, filter any, opts ...options.Lister[options.DeleteOneOptions]) (*mongo.DeleteResult, error) {
+			return nil, errors.New("Error deleting task")
+		}
 
-// 	expectedError := "payload can not be empty"
-// 	if err.Error() != expectedError {
-// 		t.Errorf("Expected error %s, got %s", expectedError, err.Error())
-// 	}
-// }
+		deletedId, err := repo.DeleteTask(ctx, taskID.Hex())
 
-// func TestDeleteTask_Success(t *testing.T) {
-// 	// Arrange
-// 	ctx := context.Background()
-// 	mockCollection := &mocks.MockCollection{}
-// 	repo := db.NewTaskRepositoryWithCollection(nil, nil, mockCollection)
+		// Assert
+		assert.NotNil(t, err)
+		assert.Equal(t, err.Error(), "Error deleting task")
+		assert.Equal(t, deletedId, bson.NilObjectID)
+	})
 
-// 	taskID := bson.NewObjectID()
+	t.Run("Should return an error when no documents to get deleted were found", func(t *testing.T) {
+		mockCollection := &mocks.MockCollection{}
+		repo := mocks.TestTaskRepository(nil, nil, mockCollection)
+		taskID := bson.NewObjectID()
 
-// 	mockCollection.DeleteOneFunc = func(ctx context.Context, filter interface{}, opts ...options.Lister[options.DeleteOneOptions]) (*mongo.DeleteResult, error) {
-// 		return &mongo.DeleteResult{
-// 			DeletedCount: 1,
-// 		}, nil
-// 	}
+		mockCollection.DeleteOneFunc = func(ctx context.Context, filter any, opts ...options.Lister[options.DeleteOneOptions]) (*mongo.DeleteResult, error) {
+			return &mongo.DeleteResult{DeletedCount: 0}, nil
+		}
 
-// 	// Act
-// 	result, err := repo.DeleteTask(ctx, taskID.Hex())
+		deletedId, err := repo.DeleteTask(ctx, taskID.Hex())
 
-// 	// Assert
-// 	if err != nil {
-// 		t.Errorf("Expected no error, got %v", err)
-// 	}
-
-// 	if result != taskID {
-// 		t.Errorf("Expected ID %s, got %s", taskID.Hex(), result.Hex())
-// 	}
-// }
-
-// func TestDeleteTask_NotFound(t *testing.T) {
-// 	// Arrange
-// 	ctx := context.Background()
-// 	mockCollection := &mocks.MockCollection{}
-// 	repo := db.NewTaskRepositoryWithCollection(nil, nil, mockCollection)
-
-// 	taskID := bson.NewObjectID()
-
-// 	mockCollection.DeleteOneFunc = func(ctx context.Context, filter interface{}, opts ...options.Lister[options.DeleteOneOptions]) (*mongo.DeleteResult, error) {
-// 		return &mongo.DeleteResult{
-// 			DeletedCount: 0, // No documents deleted
-// 		}, nil
-// 	}
-
-// 	// Act
-// 	result, err := repo.DeleteTask(ctx, taskID.Hex())
-
-// 	// Assert
-// 	if err != mongo.ErrNoDocuments {
-// 		t.Errorf("Expected ErrNoDocuments, got %v", err)
-// 	}
-
-// 	if result != bson.NilObjectID {
-// 		t.Errorf("Expected NilObjectID, got %s", result.Hex())
-// 	}
-// }
+		// Assert
+		assert.Equal(t, err, mongo.ErrNoDocuments)
+		assert.Equal(t, deletedId, bson.NilObjectID)
+		assert.Equal(t, err.Error(), "mongo: no documents in result")
+	})
+}

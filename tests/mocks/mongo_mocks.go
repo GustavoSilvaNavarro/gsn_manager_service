@@ -16,15 +16,6 @@ func TestTaskRepository(client *mongo.Client, database *mongo.Database, collecti
 	}
 }
 
-// MongoCollection interface to abstract MongoDB collection operations
-// type MongoCollection interface {
-// 	InsertOne(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error)
-// 	Find(ctx context.Context, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error)
-// 	FindOne(ctx context.Context, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult
-// 	FindOneAndUpdate(ctx context.Context, filter any, update any, opts ...options.Lister[options.FindOneAndUpdateOptions]) *mongo.SingleResult
-// 	DeleteOne(ctx context.Context, filter any, opts ...options.Lister[options.DeleteOneOptions]) (*mongo.DeleteResult, error)
-// }
-
 // MockCollection implements MongoCollection for testing
 type MockCollection struct {
 	InsertOneFunc        func(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error)
