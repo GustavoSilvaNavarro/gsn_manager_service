@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// Add this interface to your db package
+// ! Add interface for mocking purposes
 type CollectionInterface interface {
 	InsertOne(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error)
 	Find(ctx context.Context, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error)
@@ -29,9 +29,9 @@ type Tasks struct {
 }
 
 type TaskRepository struct {
-	client     *mongo.Client
-	database   *mongo.Database
-	collection CollectionInterface
+	Client     *mongo.Client
+	Database   *mongo.Database
+	Collection CollectionInterface
 }
 
 // ? Struct for new task

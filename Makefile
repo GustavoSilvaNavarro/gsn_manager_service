@@ -12,8 +12,9 @@ up:
 dev:
 	air
 
-test:
-	go test -v ./test
+unit:
+	@echo "🏃‍♂️ Running Unit Tests..."
+	go test -v ./tests/unit/...
 
 # DB Commands
 run-external-services:
