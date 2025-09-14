@@ -10,6 +10,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver/v2 v2.3.0
+	gotest.tools/gotestsum v1.13.0
 )
 
 require (
@@ -60,5 +61,4 @@ require (
 	golang.org/x/tools v0.36.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/gotestsum v1.13.0 // indirect
 )

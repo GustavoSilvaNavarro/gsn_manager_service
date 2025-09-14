@@ -16,6 +16,9 @@ unit:
 	@echo "🏃‍♂️ Running Unit Tests..."
 	go test -v ./tests/unit/...
 
+unit-pretty:
+	gotestsum --format short-verbose ./tests/unit/...
+
 # DB Commands
 run-external-services:
 	docker compose -f ./docker-compose.inf.yml up -d mongodb  mongo-express
