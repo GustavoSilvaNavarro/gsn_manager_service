@@ -12,8 +12,15 @@ up:
 dev:
 	air
 
-test:
-	go test -v ./test
+unit:
+	@echo "🏃‍♂️ Running Unit Tests..."
+	go test -v ./tests/unit/...
+
+unit-pretty:
+	gotestsum --format short-verbose ./tests/unit/...
+
+clean-cache:
+	go clean -modcache
 
 # DB Commands
 run-external-services:

@@ -11,6 +11,7 @@
     "nosniff",
     "qodo",
     "readpref",
+    "stretchr",
     "tmpl",
     "zerolog"
   ],

@@ -20,9 +20,9 @@ func NewTaskRepository(client *mongo.Client, dbName, collectionName string) *Tas
 	collection := database.Collection(collectionName)
 
 	repository := &TaskRepository{
-		client:     client,
-		database:   database,
-		collection: collection,
+		Client:     client,
+		Database:   database,
+		Collection: collection,
 	}
 
 	TaskRepo = repository
@@ -42,7 +42,7 @@ func (r *TaskRepository) CreateTodo(ctx context.Context, payload *CreateNewTask)
 		UpdatedAt: now,
 	}
 
-	result, err := r.collection.InsertOne(ctx, newTask)
+	result, err := r.Collection.InsertOne(ctx, newTask)
 	if err != nil {
 		adapters.Logger.Error().Msg(fmt.Sprintf("Error creating new task => %v", err))
 		return nil, err
@@ -54,7 +54,7 @@ func (r *TaskRepository) CreateTodo(ctx context.Context, payload *CreateNewTask)
 
 // GetTodos retrieves all todos from the collection
 func (r *TaskRepository) GetAllTasks(ctx context.Context) ([]Tasks, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{})
+	cursor, err := r.Collection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (r *TaskRepository) GetTaskById(ctx context.Context, id string) (*Tasks, er
 	}
 
 	var task Tasks
-	err = r.collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&task)
+	err = r.Collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&task)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (r *TaskRepository) ModifyTask(ctx context.Context, id string, payload *Upd
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
 	var updatedTask Tasks
-	err = r.collection.FindOneAndUpdate(ctx, filter, updateDoc, opts).Decode(&updatedTask)
+	err = r.Collection.FindOneAndUpdate(ctx, filter, updateDoc, opts).Decode(&updatedTask)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (r *TaskRepository) DeleteTask(ctx context.Context, id string) (bson.Object
 
 	filter := bson.M{"_id": objID}
 
-	result, err := r.collection.DeleteOne(ctx, filter)
+	result, err := r.Collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return bson.NilObjectID, err
 	}
