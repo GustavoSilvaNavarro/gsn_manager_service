@@ -19,6 +19,9 @@ unit:
 unit-pretty:
 	gotestsum --format short-verbose ./tests/unit/...
 
+clean-cache:
+	go clean -modcache
+
 # DB Commands
 run-external-services:
 	docker compose -f ./docker-compose.inf.yml up -d mongodb  mongo-express
