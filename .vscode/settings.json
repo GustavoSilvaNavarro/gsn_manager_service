@@ -9,6 +9,7 @@
     "buildx",
     "configdb",
     "dotenv",
+    "healthcheck",
     "healthz",
     "INITDB",
     "ldflags",
